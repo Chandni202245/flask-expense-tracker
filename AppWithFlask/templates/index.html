@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Expense Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body.dark-mode {
+      background-color: #121212;
+      color: #f1f1f1;
+    }
+    .dark-mode .table {
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Expense Tracker</a>
+    <button class="btn btn-outline-light ms-auto" onclick="toggleDarkMode()">🌗 Toggle Dark Mode</button>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- Total -->
+  <h4 class="text-center">💰 Total Spent: ₹{{ total }}</h4>
+
+  <!-- Filters -->
+  <form method="get" action="/" class="row g-3 my-3">
+    <div class="col-md-4">
+      <select name="category" class="form-select">
+        <option value="">-- Filter by Category --</option>
+        {% for cat in categories %}
+          <option value="{{ cat }}" {% if request.args.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <input type="date" name="date" class="form-control" value="{{ request.args.get('date', '') }}">
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary w-100">Apply</button>
+    </div>
+    <div class="col-md-3 text-end">
+      <a href="/export" class="btn btn-success w-100">⬇️ Export to CSV</a>
+    </div>
+  </form>
+
+  <!-- Add Expense -->
+  <form action="/add" method="post" class="row g-3 mb-4">
+    <div class="col-md-3">
+      <input type="date" name="date" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <input type="text" name="category" class="form-control" placeholder="Category" required>
+    </div>
+    <div class="col-md-3">
+      <input type="text" name="description" class="form-control" placeholder="Description" required>
+    </div>
+    <div class="col-md-2">
+      <input type="number" name="amount" step="0.01" class="form-control" placeholder="Amount" required>
+    </div>
+    <div class="col-md-1">
+      <button type="submit" class="btn btn-success w-100">Add</button>
+    </div>
+  </form>
+
+  <!-- Table -->
+  <table class="table table-bordered table-hover">
+    <thead class="table-dark">
+      <tr>
+        <th>Date</th>
+        <th>Category</th>
+        <th>Description</th>
+        <th>Amount (₹)</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for expense in expenses %}
+      <tr>
+        <td>{{ expense[1] }}</td>
+        <td>{{ expense[2] }}</td>
+        <td>{{ expense[3] }}</td>
+        <td>{{ expense[4] }}</td>
+        <td>
+          <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ expense[0] }}">Edit</button>
+          <a href="/delete/{{ expense[0] }}" class="btn btn-danger btn-sm">Delete</a>
+        </td>
+      </tr>
+
+      <!-- Edit Modal -->
+      <div class="modal fade" id="editModal{{ expense[0] }}" tabindex="-1" aria-labelledby="editModalLabel{{ expense[0] }}" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <form action="/update/{{ expense[0] }}" method="post">
+              <div class="modal-header">
+                <h5 class="modal-title">Edit Expense</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label>Date</label>
+                  <input type="date" name="date" class="form-control" value="{{ expense[1] }}" required>
+                </div>
+                <div class="mb-3">
+                  <label>Category</label>
+                  <input type="text" name="category" class="form-control" value="{{ expense[2] }}" required>
+                </div>
+                <div class="mb-3">
+                  <label>Description</label>
+                  <input type="text" name="description" class="form-control" value="{{ expense[3] }}" required>
+                </div>
+                <div class="mb-3">
+                  <label>Amount</label>
+                  <input type="number" step="0.01" name="amount" class="form-control" value="{{ expense[4] }}" required>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Dark mode toggle JS -->
+<script>
+  function toggleDarkMode() {
+    document.body.classList.toggle("dark-mode");
+  }
+</script>
+</body>
+</html>
